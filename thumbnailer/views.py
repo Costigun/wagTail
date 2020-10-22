@@ -8,12 +8,17 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
 from .tasks import make_thumbnails
+
+
 class FileUploadForm(forms.Form):
     image_file = forms.ImageField(required=True)
+
+
 class HomeView(View):
     def get(self, request):
         form = FileUploadForm()
-        return render(request, 'home.html', { 'form': form })
+        return render(request, 'thumbnailer/home.html', {'form': form})
+
     def post(self, request):
         form = FileUploadForm(request.POST, request.FILES)
         context = {}
@@ -25,9 +30,11 @@ class HomeView(View):
             task = make_thumbnails.delay(file_path, thumbnails=[(128, 128)])
             context['task_id'] = task.id
             context['task_status'] = task.status
-            return render(request, 'home.html', context)
+            return render(request, 'thumbnailer/home.html', context)
         context['form'] = form
-        return render(request, 'home.html', context)
+        return render(request, 'thumbnailer/home.html', context)
+
+
 class TaskView(View):
     def get(self, request, task_id):
         task = current_app.AsyncResult(task_id)
